@@ -1,7 +1,7 @@
-#pragma config(Sensor, dgtl1,  bump,           sensorTouch)
+#pragma config(Sensor, dgtl7,  bump,           sensorTouch)
 #pragma config(Motor,  port2,           rightside,     tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           leftside,      tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port4,           hpsucker,      tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port4,           hpsucker,      tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           hphammer,      tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port6,           trashcancollect1, tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port7,           trashcancollect2, tmotorVex393_MC29, openLoop)
@@ -21,11 +21,12 @@ void drive(int throttle, int wheel)
 	motor[rightside] = throttle + wheel;
 
 }
+int have_can =0;
 //5d suck 5u spit
 void control(int trashin, int trashout, int ballstage1in, int ballstage1out, int ballstage2in, int ballstage2out, int hpin,
 int hpout, int hpsuck)
 {
-	if(SensorValue[bump] == 1) //when trashcan is in
+	/*if(SensorValue[bump] == 1) //when trashcan is in
 	{
 		if(trashin) // trash in
 		{
@@ -59,7 +60,72 @@ int hpout, int hpsuck)
 		{
 			motor[trashcancollect1] = -127; motor[trashcancollect2] = -127;
 		}
+
+
 	}
+	*/
+	if(have_can == 0)
+	{
+		if(SensorValue(bump) == 0) //can not in
+		{
+			if (trashin)
+			{
+				motor[trashcancollect1] = -127; motor[trashcancollect2] = -127;
+			}
+
+			else if (trashout)
+			{
+				motor[trashcancollect1] = 127; motor[trashcancollect2] = 127;
+			}
+
+			else
+			{
+				motor[trashcancollect1] = 0; motor[trashcancollect2] = 0;}
+	   	}
+
+	 else
+	 {
+	   have_can = 1;
+	 }
+	}
+
+	else
+	{ // Have can == True
+		if(SensorValue(bump) == 0)
+		{
+			if (trashin)
+			{
+				motor[trashcancollect1] = -127; motor[trashcancollect2] = -127;
+			}
+
+			else if (trashout)
+			{
+				motor[trashcancollect1] = 127; motor[trashcancollect2] = 127; have_can =0;
+			}
+
+			else
+			{
+				motor[trashcancollect1] = -127; motor[trashcancollect2] = -127;
+			}
+		}
+		else
+		{//sensorvalue (Bump) == 0
+			if(trashin)
+			{
+				motor[trashcancollect1] = 0; motor[trashcancollect2] = 0;
+			}
+
+			else if(trashout)
+			{
+				motor[trashcancollect1] = 127; motor[trashcancollect2] = 127; have_can =0;
+			}
+			else
+			{
+				motor[trashcancollect1] = 0; motor[trashcancollect2] = 0;
+			}
+		}
+	}
+
 	if(ballstage2out)
 	{
 		motor[ballcollect2] = 127;
@@ -98,15 +164,18 @@ int hpout, int hpsuck)
 	else if(ballstage1in)
 	{
 		motor[hpsucker] = 127;
+		motor[ballcollect1] = -127;
 	}
 
 	else if(ballstage1out)
 	{
-		motor[hpsucker] = -127;
+		motor[hpsucker] = 127;
+		motor[ballcollect1] = 127;
 	}
 	else
 	{
 		motor[hpsucker] = 0;
+		motor[ballcollect1] = 0;
 	}
 
 	if(motor[hpsucker] >127) motor[hpsucker] = 127;
